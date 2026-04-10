@@ -1,0 +1,7 @@
+{
+  "name": "com.network_diagnostic.host",
+  "description": "网络诊断 Native Messaging Host",
+  "path": "C:\\Users\\Administrator\\.openclaw-autoclaw\\workspace\\network-diagnostic\\native_host.cmd",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://*", "edge-extension://*"]
+}
