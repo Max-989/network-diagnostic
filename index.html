@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网络诊断工具</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1a2332;--bg4:#243044;
+  --border:#2a3a50;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --green:#10b981;--green-bg:rgba(16,185,129,.12);
+  --yellow:#f59e0b;--yellow-bg:rgba(245,158,11,.12);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.12);
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,.12);
+  --purple:#8b5cf6;--radius:12px;--radius-sm:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+
+/* Header */
+.header{text-align:center;padding:40px 20px 20px;
+  background:linear-gradient(180deg,#0f172a 0%,var(--bg) 100%)}
+.header h1{font-size:2.2rem;font-weight:700;
+  background:linear-gradient(135deg,#60a5fa,#a78bfa,#f472b6);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:8px}
+.header p{color:var(--text2);font-size:.95rem;margin-bottom:24px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;
+  border:none;border-radius:var(--radius);font-size:1rem;font-weight:600;
+  cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.btn-primary{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;
+  box-shadow:0 4px 15px rgba(59,130,246,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(59,130,246,.4)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;
+  box-shadow:0 4px 15px rgba(239,68,68,.3)}
+.btn-danger:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(239,68,68,.4)}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--bg4);border-color:var(--blue)}
+.btn-sm{padding:8px 16px;font-size:.85rem;border-radius:var(--radius-sm)}
+
+/* Loading spinner */
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Container */
+.container{max-width:1100px;margin:0 auto;padding:20px}
+
+/* Section */
+.section{margin-bottom:32px}
+.section-title{display:flex;align-items:center;gap:10px;font-size:1.15rem;
+  font-weight:600;margin-bottom:16px;padding-bottom:10px;
+  border-bottom:1px solid var(--border)}
+.section-title .icon{width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:.85rem}
+
+/* Cards Grid */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+
+/* Card */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;transition:all .3s;animation:fadeIn .4s ease-out}
+.card:hover{border-color:var(--blue);box-shadow:0 0 20px rgba(59,130,246,.08)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.card-name{font-weight:600;font-size:.95rem;display:flex;align-items:center;gap:8px}
+.card-cost{font-size:.78rem;color:var(--text3)}
+.card-detail{font-size:.85rem;color:var(--text2);line-height:1.7;
+  max-height:300px;overflow-y:auto;word-break:break-all;white-space:pre-wrap}
+
+/* Status badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;
+  border-radius:20px;font-size:.78rem;font-weight:600}
+.badge-ok{background:var(--green-bg);color:var(--green)}
+.badge-warn{background:var(--yellow-bg);color:var(--yellow)}
+.badge-error{background:var(--red-bg);color:var(--red)}
+.badge-loading{background:var(--blue-bg);color:var(--blue)}
+
+/* Status icon */
+.status-icon{width:22px;height:22px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0}
+.status-ok{background:var(--green-bg);color:var(--green)}
+.status-warn{background:var(--yellow-bg);color:var(--yellow)}
+.status-error{background:var(--red-bg);color:var(--red)}
+.status-loading{background:var(--blue-bg);color:var(--blue);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Sub-items */
+.sub-items{margin-top:10px}
+.sub-item{display:flex;justify-content:space-between;align-items:flex-start;
+  padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem}
+.sub-item:last-child{border-bottom:none}
+.sub-label{color:var(--text2);flex-shrink:0;max-width:45%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.sub-detail{color:var(--text);text-align:right;max-width:55%;word-break:break-all}
+
+/* Repair Grid */
+.repair-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.repair-btn{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;cursor:pointer;transition:all .25s;text-align:left}
+.repair-btn:hover{border-color:var(--yellow);background:var(--bg3);
+  box-shadow:0 0 15px rgba(245,158,11,.1);transform:translateY(-1px)}
+.repair-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.repair-btn h4{font-size:.9rem;font-weight:600;margin-bottom:4px;color:var(--text)}
+.repair-btn p{font-size:.78rem;color:var(--text3)}
+.repair-btn .repair-icon{font-size:1.4rem;margin-bottom:8px}
+
+/* Repair Result Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:1000;
+  align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:28px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal h3{font-size:1.1rem;margin-bottom:16px}
+.modal pre{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:14px;font-size:.82rem;overflow-x:auto;white-space:pre-wrap;
+  word-break:break-all;max-height:400px;color:var(--text2)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+
+/* Summary Bar */
+.summary{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px 24px;display:none}
+.summary.active{display:block}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:16px}
+.summary-item{text-align:center}
+.summary-value{font-size:1.6rem;font-weight:700;line-height:1.2}
+.summary-label{font-size:.78rem;color:var(--text3);margin-top:4px}
+.summary-advice{font-size:.88rem;color:var(--text2);padding:12px 16px;
+  background:var(--bg);border-radius:var(--radius-sm);border-left:3px solid var(--blue)}
+.summary-advice ul{margin:8px 0 0 20px}
+.summary-advice li{margin-bottom:4px}
+
+/* Progress bar */
+.progress-bar{height:3px;background:var(--bg3);border-radius:2px;margin-bottom:20px;overflow:hidden;display:none}
+.progress-bar.active{display:block}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));
+  border-radius:2px;transition:width .3s ease;width:0}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+
+/* Responsive */
+@media(max-width:768px){
+  .header h1{font-size:1.6rem}
+  .container{padding:12px}
+  .cards-grid{grid-template-columns:1fr}
+  .repair-grid{grid-template-columns:1fr 1fr}
+  .summary-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:480px){
+  .repair-grid{grid-template-columns:1fr}
+  .summary-grid{grid-template-columns:1fr 1fr}
+}
+
+/* Running state */
+.card.running{border-color:var(--blue);box-shadow:0 0 15px rgba(59,130,246,.1)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🛡️ 网络诊断工具</h1>
+  <p>一键检测网络状态，快速定位并修复网络问题</p>
+  <button class="btn btn-primary" id="btnDiagnose" onclick="startDiagnose()">
+    <span id="diagIcon">🔍</span>
+    <span id="diagText">一键诊断</span>
+  </button>
+</div>
+
+<div class="container">
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- Diagnostic Results -->
+  <div class="section" id="diagSection" style="display:none">
+    <div class="section-title">
+      <span class="icon" style="background:var(--blue-bg);color:var(--blue)">📋</span>
+      诊断结果
+      <span style="margin-left:auto;font-size:.82rem;color:var(--text3)" id="diagTime"></span>
+    </div>
+    <div class="cards-grid" id="diagCards"></div>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary" id="summary"></div>
+
+  <!-- Repair Section -->
+  <div class="section" id="repairSection">
+    <div class="section-title">
+      <span class="icon" style="background:var(--yellow-bg);color:var(--yellow)">🔧</span>
+      网络修复
+    </div>
+    <div style="text-align:center;margin-bottom:16px">
+      <button class="btn btn-danger" id="btnRepairAll" onclick="repairAll()">
+        <span>⚡</span> 一键全部修复
+      </button>
+    </div>
+    <div class="repair-grid" id="repairGrid"></div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">确认操作</h3>
+    <p id="confirmMsg" style="color:var(--text2);margin-bottom:16px"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('confirmModal')">取消</button>
+      <button class="btn btn-danger btn-sm" id="confirmBtn" onclick="">确认执行</button>
+    </div>
+  </div>
+</div>
+
+<!-- Result Modal -->
+<div class="modal-overlay" id="resultModal">
+  <div class="modal">
+    <h3 id="resultTitle">执行结果</h3>
+    <pre id="resultContent"></pre>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('resultModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const REPAIR_ITEMS = [
+  {key:'flush_dns', name:'刷新 DNS 缓存', desc:'清除系统 DNS 解析缓存', icon:'🔄'},
+  {key:'reset_winsock', name:'重置 Winsock', desc:'修复 Winsock 目录', icon:'🔌'},
+  {key:'reset_tcp', name:'重置 TCP/IP', desc:'重置 TCP/IP 协议栈', icon:'🌐'},
+  {key:'release_renew', name:'释放/续租 IP', desc:'重新获取 DHCP 地址', icon:'📡'},
+  {key:'flush_arp', name:'清空 ARP 缓存', desc:'清除 ARP 解析表', icon:'🗄️'},
+  {key:'reset_proxy', name:'关闭系统代理', desc:'禁用 Windows 代理', icon:'🚫'},
+  {key:'set_dns', name:'设置阿里 DNS', desc:'223.5.5.5 + 223.6.6.6', icon:'🏷️'},
+  {key:'reset_adapter', name:'重置网卡', desc:'禁用再启用适配器', icon:'💿'},
+];
+
+const DIAG_ICONS = {
+  dns:'🌍', gateway:'🚪', external:'🌐', websites:'🖥️',
+  ports:'🔌', proxy:'🕵️', wifi:'📶', bandwidth:'⚡', traceroute:'🗺️'
+};
+
+let isDiagnosing = false;
+let isRepairing = false;
+let lastDiagResults = [];  // 保存最近一次诊断结果
+let lastFailedItems = [];  // 保存异常项 key
+
+// Init repair grid
+function initRepairGrid(){
+  const grid = document.getElementById('repairGrid');
+  grid.innerHTML = REPAIR_ITEMS.map(item => `
+    <div class="repair-btn" id="repair_${item.key}" onclick="confirmRepair('${item.key}','${item.name}')">
+      <div class="repair-icon">${item.icon}</div>
+      <h4>${item.name}</h4>
+      <p>${item.desc}</p>
+    </div>
+  `).join('');
+}
+
+// Status helpers
+function statusIcon(status, text){
+  if(status === 'ok') return `<span class="status-icon status-ok">✓</span>`;
+  if(status === 'warn') return `<span class="status-icon status-warn">⚠</span>`;
+  if(status === 'error') return `<span class="status-icon status-error">✗</span>`;
+  if(status === 'loading') return `<span class="status-icon status-loading"><div class="spinner" style="border-color:rgba(59,130,246,.3);border-top-color:var(--blue)"></div></span>`;
+  return `<span class="status-icon">${text||'?'}</span>`;
+}
+
+function badgeClass(status){
+  return status==='ok'?'badge-ok':status==='warn'?'badge-warn':status==='error'?'badge-error':'badge-loading';
+}
+
+function badgeText(status){
+  return status==='ok'?'正常':status==='warn'?'警告':status==='error'?'异常':'检测中...';
+}
+
+// Render diagnostic card
+function renderCard(result){
+  const icon = DIAG_ICONS[result.key] || '📋';
+  const status = result.status;
+  let detail = '';
+  if(result.items && result.items.length){
+    detail = result.items.map(item => `
+      <div class="sub-item">
+        <span class="sub-label">${item.label}</span>
+        <span class="sub-detail">${statusIcon(item.status,'')} ${item.detail}</span>
+      </div>
+    `).join('');
+  } else if(result.detail){
+    detail = result.detail;
+  }
+
+  const costMs = result.cost_ms || result.total_cost_ms || 0;
+  return `
+    <div class="card" id="card_${result.key}">
+      <div class="card-header">
+        <div class="card-name">${statusIcon(status,'')} ${icon} ${result.name}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge ${badgeClass(status)}">${badgeText(status)}</span>
+          <span class="card-cost">${costMs}ms</span>
+        </div>
+      </div>
+      <div class="card-detail"><div class="sub-items">${detail}</div></div>
+    </div>
+  `;
+}
+
+// Start diagnosis
+async function startDiagnose(){
+  if(isDiagnosing) return;
+  isDiagnosing = true;
+
+  const btn = document.getElementById('btnDiagnose');
+  btn.disabled = true;
+  document.getElementById('diagIcon').innerHTML = '<div class="spinner"></div>';
+  document.getElementById('diagText').textContent = '诊断中...';
+
+const REPAIR_NAMES = {
+  flush_dns:'刷新DNS缓存', reset_winsock:'重置Winsock', reset_tcp:'重置TCP/IP',
+  release_renew:'释放重获IP', flush_arp:'清空ARP缓存', reset_proxy:'关闭系统代理',
+  set_dns:'设置阿里DNS', reset_adapter:'重置网卡', repair_all:'一键全部修复'
+};
+
+  const section = document.getElementById('diagSection');
+  const cards = document.getElementById('diagCards');
+  const summary = document.getElementById('summary');
+  const progressBar = document.getElementById('progressBar');
+  const progressFill = document.getElementById('progressFill');
+
+  section.style.display = 'block';
+  summary.className = 'summary';
+  progressBar.className = 'progress-bar active';
+  progressFill.style.width = '0%';
+
+  // Show loading cards
+  const keys = ['dns','gateway','external','websites','ports','proxy','wifi','bandwidth','traceroute'];
+  const names = ['DNS 检测','网关检测','外网连通','网站可用性','端口检测','代理检测','WiFi 信息','带宽测速','路由追踪'];
+  const totalChecks = keys.length;
+  cards.innerHTML = keys.map((key,i) => `
+    <div class="card running" id="card_${key}">
+      <div class="card-header">
+        <div class="card-name">${statusIcon('loading','')} ${DIAG_ICONS[key]||'📋'} ${names[i]}</div>
+        <span class="badge badge-loading">检测中...</span>
+      </div>
+      <div class="card-detail" style="color:var(--text3)">正在检测...</div>
+    </div>
+  `).join('');
+
+  try{
+    const es = new EventSource('/api/diagnose');
+    const results = [];
+    let doneCount = 0;
+
+    es.onmessage = function(e){
+      const msg = JSON.parse(e.data);
+      if(msg.type === 'item'){
+        doneCount++;
+        results.push(msg.data);
+        const card = document.getElementById('card_' + msg.data.key);
+        if(card) card.outerHTML = renderCard(msg.data);
+        progressFill.style.width = (doneCount / totalChecks * 100) + '%';
+      } else if(msg.type === 'done'){
+        es.close();
+        document.getElementById('diagTime').textContent = `完成于 ${msg.timestamp} | 总耗时 ${msg.total_time_ms}ms`;
+        showSummary(results, msg.total_time_ms);
+        lastDiagResults = results;
+        lastFailedItems = results.filter(r => r.status === 'error' || r.status === 'warn').map(r => r.key);
+        updateRepairButton();
+        progressBar.className = 'progress-bar';
+        btn.disabled = false;
+        document.getElementById('diagIcon').textContent = '🔍';
+        document.getElementById('diagText').textContent = '重新诊断';
+        isDiagnosing = false;
+
+        // 自动弹窗：发现异常则提示一键修复
+        if(lastFailedItems.length > 0){
+          setTimeout(()=>{
+            const failedNames = lastDiagResults.filter(r=>r.status==='error'||r.status==='warn').map(r=>r.name);
+            document.getElementById('confirmTitle').textContent = '🤖 智能诊断完成';
+            document.getElementById('confirmMsg').textContent = '发现 ' + failedNames.length + ' 项异常：' + failedNames.join('、') + '\n\n是否立即自动修复？';
+            document.getElementById('confirmBtn').textContent = '立即修复';
+            document.getElementById('confirmBtn').onclick = function(){ executeRepair('repair_all','智能修复',lastFailedItems); };
+            openModal('confirmModal');
+          }, 500);
+        }
+      }
+    };
+
+    es.onerror = function(){
+      es.close();
+      if(!isDiagnosing) return;
+      cards.innerHTML = `<div class="card"><div class="card-detail" style="color:var(--red)">连接中断</div></div>`;
+      progressBar.className = 'progress-bar';
+      btn.disabled = false;
+      document.getElementById('diagIcon').textContent = '🔍';
+      document.getElementById('diagText').textContent = '重新诊断';
+      isDiagnosing = false;
+    };
+
+  }catch(e){
+    cards.innerHTML = `<div class="card"><div class="card-detail" style="color:var(--red)">诊断失败: ${e.message}</div></div>`;
+    progressBar.className = 'progress-bar';
+    btn.disabled = false;
+    isDiagnosing = false;
+  }
+}
+
+// Show summary
+function showSummary(results, totalTime){
+  const summary = document.getElementById('summary');
+  const ok = results.filter(r=>r.status==='ok').length;
+  const warn = results.filter(r=>r.status==='warn').length;
+  const err = results.filter(r=>r.status==='error').length;
+
+  let advice = [];
+  if(err > 0){
+    const errNames = results.filter(r=>r.status==='error').map(r=>r.name);
+    advice.push(`<strong>以下检测项异常:</strong> ${errNames.join('、')}`);
+  }
+  if(warn > 0){
+    const warnNames = results.filter(r=>r.status==='warn').map(r=>r.name);
+    advice.push(`<strong>以下检测项需关注:</strong> ${warnNames.join('、')}`);
+  }
+  if(err > 0){
+    advice.push('建议尝试「一键全部修复」功能，或逐项使用修复工具');
+    advice.push('如果问题持续，请检查物理连接（网线/WiFi）或联系网络管理员');
+  }
+  if(err === 0 && warn === 0){
+    advice.push('✅ 网络状态良好，所有检测项均正常');
+  }
+
+  summary.innerHTML = `
+    <div class="section-title" style="border-bottom:none;margin-bottom:12px;padding-bottom:0">
+      <span class="icon" style="background:var(--green-bg);color:var(--green)">📊</span>
+      诊断报告
+    </div>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-value" style="color:var(--text)">${results.length}</div>
+        <div class="summary-label">检测项目</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color:var(--green)">${ok}</div>
+        <div class="summary-label">正常</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color:var(--yellow)">${warn}</div>
+        <div class="summary-label">警告</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color:var(--red)">${err}</div>
+        <div class="summary-label">异常</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color:var(--text)">${totalTime}</div>
+        <div class="summary-label">总耗时 (ms)</div>
+      </div>
+    </div>
+    <div class="summary-advice">${advice.map(a=>`<div>${a}</div>`).join('')}</div>
+  `;
+  summary.className = 'summary active';
+}
+
+// Confirm repair
+function confirmRepair(key, name){
+  if(isRepairing) return;
+  document.getElementById('confirmTitle').textContent = `确认修复: ${name}`;
+  document.getElementById('confirmMsg').textContent = '此操作将修改系统网络设置，是否继续？';
+  document.getElementById('confirmBtn').onclick = ()=> executeRepair(key, name);
+  openModal('confirmModal');
+}
+
+function repairAll(){
+  if(isRepairing) return;
+  if(lastFailedItems.length === 0){
+    document.getElementById('confirmTitle').textContent = '无需修复';
+    document.getElementById('confirmMsg').textContent = '当前没有检测到异常项，无需执行修复操作。';
+    document.getElementById('confirmBtn').onclick = ()=> closeModal('confirmModal');
+    openModal('confirmModal');
+    return;
+  }
+  const failedNames = lastDiagResults.filter(r => r.status==='error'||r.status==='warn').map(r => r.name);
+  document.getElementById('confirmTitle').textContent = '智能修复';
+  document.getElementById('confirmMsg').textContent = `检测到 ${failedNames.length} 项异常：${failedNames.join('、')}。将针对性执行修复操作，是否继续？`;
+  document.getElementById('confirmBtn').onclick = ()=> executeRepair('repair_all', '智能修复', lastFailedItems);
+  openModal('confirmModal');
+}
+
+function updateRepairButton(){
+  const btn = document.getElementById('btnRepairAll');
+  if(lastFailedItems.length > 0){
+    btn.innerHTML = `<span>⚡</span> 一键修复 (${lastFailedItems.length}项异常)`;
+    btn.classList.add('has-issues');
+  } else {
+    btn.innerHTML = '<span>⚡</span> 一键全部修复';
+    btn.classList.remove('has-issues');
+  }
+}
+
+// Execute repair
+async function executeRepair(key, name, failedItems){
+  closeModal('confirmModal');
+  isRepairing = true;
+
+  const btn = key === 'repair_all' ? document.getElementById('btnRepairAll') : null;
+  if(btn){btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> 执行中...';}
+  document.querySelectorAll('.repair-btn').forEach(b=>b.disabled=true);
+
+  try{
+    const body = {action: key};
+    if(failedItems) body.failed_items = failedItems;
+    const resp = await fetch('/api/repair', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await resp.json();
+
+    if(key === 'repair_all' && data.details){
+      const matchedNames = (data.matched_repairs||[]).map(k => REPAIR_NAMES[k] || k);
+      let html = `📋 异常项: ${(data.failed_items||[]).join(', ')}\n`;
+      html += `🔧 执行修复: ${matchedNames.join(', ')}\n\n`;
+      html += data.details.map(d =>
+        `[${d.status==='ok'?'✓':'✗'}] ${REPAIR_NAMES[d.action]||d.action}\n${d.output}`
+      ).join('\n\n');
+      document.getElementById('resultTitle').textContent = '智能修复结果';
+      document.getElementById('resultContent').textContent = html;
+    } else {
+      document.getElementById('resultTitle').textContent = `${name} - ${data.status==='ok'?'成功':'失败'}`;
+      document.getElementById('resultContent').textContent = data.output || '无输出';
+    }
+    openModal('resultModal');
+  }catch(e){
+    document.getElementById('resultTitle').textContent = '执行失败';
+    document.getElementById('resultContent').textContent = e.message;
+    openModal('resultModal');
+  }
+
+  document.querySelectorAll('.repair-btn').forEach(b=>b.disabled=false);
+  if(btn){btn.disabled=false; btn.innerHTML = '<span>⚡</span> 一键全部修复';}
+  isRepairing = false;
+}
+
+// Modal helpers
+function openModal(id){
+  document.getElementById(id).classList.add('active');
+}
+function closeModal(id){
+  document.getElementById(id).classList.remove('active');
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+  overlay.addEventListener('click', e=>{
+    if(e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+// Keyboard: ESC to close modals
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    document.querySelectorAll('.modal-overlay.active').forEach(m=>m.classList.remove('active'));
+  }
+});
+
+// Init
+initRepairGrid();
+</script>
+</body>
+</html>
