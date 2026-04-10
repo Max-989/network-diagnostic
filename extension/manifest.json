@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "网络诊断",
+  "version": "1.1.0",
+  "description": "一键网络诊断与修复工具",
+  "permissions": ["nativeMessaging"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
