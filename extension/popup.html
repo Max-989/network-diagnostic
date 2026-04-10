@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="popup.css">
+<title>网络诊断</title>
+</head>
+<body>
+<div class="header">
+  <h1>🌐 网络诊断</h1>
+  <p>一键检测 · 智能修复</p>
+  <button class="btn btn-primary" id="btnDiag">
+    <span id="diagIcon">🔍</span>
+    <span id="diagText">一键诊断</span>
+  </button>
+</div>
+<div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+<div id="mainContent">
+  <div class="offline" id="offlineMsg">
+    <h2>🔌 连接中...</h2>
+    <p>正在启动诊断引擎</p>
+  </div>
+  <div class="section" id="diagSection" style="display:none">
+    <div class="section-title">📋 诊断结果</div>
+    <div id="diagCards"></div>
+  </div>
+  <div class="summary" id="summary"></div>
+  <div class="section" id="repairSection" style="display:none">
+    <div class="section-title">🔧 修复工具</div>
+    <div class="repair-grid" id="repairGrid"></div>
+    <div style="margin-top:10px;text-align:center">
+      <button class="btn btn-primary btn-sm" id="btnRepairAll"><span>⚡</span> 一键全部修复</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">确认</h3>
+    <p id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" id="confirmCancel">取消</button>
+      <button class="btn btn-primary btn-sm" id="confirmBtn">确认</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="resultModal">
+  <div class="modal">
+    <h3 id="resultTitle">结果</h3>
+    <p id="resultContent"></p>
+    <div class="modal-actions"><button class="btn btn-primary btn-sm" id="resultClose">确定</button></div>
+  </div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>
